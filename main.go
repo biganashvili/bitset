@@ -1,38 +1,32 @@
 package main
 
 import (
+	"br/bitset"
 	"bufio"
 	"fmt"
 	"log"
+	"math"
 	"os"
+	"runtime"
 	"time"
 
 	"github.com/praserx/ipconv"
 )
 
-// var mp = make(map[string]int, 10000000000)
-var slc = [10]map[uint32]bool{}
-
-// uyuyuyuyuyææ
+var mem runtime.MemStats = runtime.MemStats{}
+var totalIPNumber = int64(math.Pow(2, 32)) //4,294,967,296
+var slcLen = int(totalIPNumber / 32)       //134,217,728
+var slc = make(bitset.BitSet, slcLen)
 
 func main() {
-	for i := 0; i < 10; i++ {
-		slc[i] = make(map[uint32]bool, 10000000)
-	}
-	unique := 0
 	t := time.Now()
-	scan() //116971867 470.900543541 // just read 2.211524667
-	for i := 0; i < 10; i++ {
-		unique += len(slc[i])
-	}
+	unique := scan()
 	fmt.Println(unique, time.Since(t).Seconds())
-	// fmt.Println(unique)
-
 }
 
-func scan() {
-	file, _ := os.Open("./ip.txt")
-
+func scan() int64 {
+	unique := int64(0)
+	file, _ := os.Open("./ips.txt")
 	fileScanner := bufio.NewScanner(file)
 
 	// read line by line
@@ -40,35 +34,31 @@ func scan() {
 	t := time.Now()
 	for fileScanner.Scan() {
 		if it%10000000 == 0 {
+			runtime.ReadMemStats(&mem)
 			fmt.Println(it, time.Since(t).Seconds())
+			fmt.Printf("Total allocated memory (in bytes): %d\n", mem.Alloc)
+			// fmt.Printf("Number of garbage collections: %d\n", mem.NumGC)
 			t = time.Now()
 		}
 		it++
-
-		// octs := strings.Split(fileScanner.Text(), ".")
-		// _, _ = strconv.Atoi(octs[0])
 
 		ip, version, err := ipconv.ParseIP(fileScanner.Text())
 		if err != nil && version == 4 {
 			fmt.Println(ipconv.IPv4ToInt(ip))
 		}
 		intIP, _ := ipconv.IPv4ToInt(ip)
-		k := intIP % 10
-		slc[k][intIP] = true
-		// slc = append(slc, intIP)
-
+		if !slc.IsSet(intIP) {
+			slc.Set(intIP)
+			unique++
+		}
+		if unique == totalIPNumber {
+			return unique
+		}
 	}
 	// handle first encountered error while reading
 	if err := fileScanner.Err(); err != nil {
 		log.Fatalf("Error while reading file: %s", err)
 	}
-
 	file.Close()
-
+	return unique
 }
-
-// func gen() {
-// 	for {
-// 		fmt.Printf("%d.%d.%d.%d\n", rand.IntN(255), rand.IntN(255), rand.IntN(255), rand.IntN(255))
-// 	}
-// }
