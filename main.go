@@ -21,7 +21,10 @@ var slc = make(bitset.BitSet, slcLen)
 func main() {
 	t := time.Now()
 	unique := scan()
+	runtime.GC()
 	fmt.Println(unique, time.Since(t).Seconds())
+	runtime.ReadMemStats(&mem)
+	fmt.Printf("Total allocated memory (in bytes): %d\n", mem.Alloc)
 }
 
 func scan() int64 {
@@ -33,6 +36,7 @@ func scan() int64 {
 	it := 0
 	t := time.Now()
 	for fileScanner.Scan() {
+		//Just to track the proggress, prints progress for each 10 million lines
 		if it%10000000 == 0 {
 			runtime.ReadMemStats(&mem)
 			fmt.Println(it, time.Since(t).Seconds())
